@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AAPL Stock Prediction</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+    <div class="page-wrapper">
+
+        <div class="container">
+
+
+            <!-- =====================================================
+                 HEADER
+            ====================================================== -->
+
+            <header class="header">
+
+                <div class="header-badge">
+                    LSTM DEEP LEARNING MODEL
+                </div>
+
+                <h1>
+                    AAPL Stock Prediction
+                </h1>
+
+                <p>
+                    Next Trading Day Closing Price Prediction
+                </p>
+
+            </header>
+
+
+            <!-- =====================================================
+                 MAIN CONTENT
+            ====================================================== -->
+
+            <main class="dashboard">
+
+
+                <!-- =================================================
+                     UPLOAD CARD
+                ================================================== -->
+
+                <section class="card upload-card">
+
+                    <div class="card-header">
+
+                        <div class="icon-box">
+                            ↑
+                        </div>
+
+                        <div>
+                            <h2>
+                                Predict Apple Stock Price
+                            </h2>
+
+                            <p>
+                                Upload historical stock data to generate
+                                the next trading day's predicted closing price.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <!-- Information -->
+
+                    <div class="info-box">
+
+                        <div class="info-item">
+
+                            <span class="info-label">
+                                Required Data
+                            </span>
+
+                            <span class="info-value">
+                                60 Trading Days
+                            </span>
+
+                        </div>
+
+
+                        <div class="info-item">
+
+                            <span class="info-label">
+                                Model
+                            </span>
+
+                            <span class="info-value">
+                                LSTM
+                            </span>
+
+                        </div>
+
+
+                        <div class="info-item">
+
+                            <span class="info-label">
+                                Target
+                            </span>
+
+                            <span class="info-value">
+                                Closing Price
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Upload Form -->
+
+                    <form
+                        action="/predict"
+                        method="POST"
+                        enctype="multipart/form-data"
+                        id="prediction-form"
+                    >
+
+                        <label
+                            for="file"
+                            class="file-upload"
+                            id="file-upload"
+                        >
+
+                            <div class="upload-icon">
+                                📄
+                            </div>
+
+                            <div class="upload-title">
+                                Choose CSV File
+                            </div>
+
+                            <div class="upload-subtitle">
+                                Click here to select your stock dataset
+                            </div>
+
+                            <div class="upload-format">
+                                CSV files only
+                            </div>
+
+                        </label>
+
+
+                        <input
+                            type="file"
+                            id="file"
+                            name="file"
+                            accept=".csv"
+                            required
+                        >
+
+
+                        <!-- Selected File -->
+
+                        <div
+                            class="selected-file"
+                            id="selected-file"
+                        >
+
+                            <span class="file-check">
+                                ✓
+                            </span>
+
+                            <span id="file-name">
+                                No file selected
+                            </span>
+
+                        </div>
+
+
+                        <!-- Predict Button -->
+
+                        <button
+                            type="submit"
+                            class="predict-button"
+                            id="predict-button"
+                        >
+
+                            <span id="button-text">
+                                Predict Next Price
+                            </span>
+
+                            <span
+                                id="loading-text"
+                                class="loading-text"
+                            >
+                                Processing...
+                            </span>
+
+                        </button>
+
+                    </form>
+
+
+                    <!-- Dataset Note -->
+
+                    <div class="dataset-note">
+
+                        <span>ⓘ</span>
+
+                        <p>
+                            The uploaded CSV must contain:
+                            <strong>
+                                Date, Open, High, Low, Close, Volume
+                            </strong>
+                            and at least 60 valid trading-day records.
+                        </p>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- =================================================
+                     RESULT CARD
+                ================================================== -->
+
+                <section class="card result-card">
+
+                    <div class="card-header">
+
+                        <div class="icon-box result-icon">
+                            $
+                        </div>
+
+                        <div>
+
+                            <h2>
+                                Prediction Result
+                            </h2>
+
+                            <p>
+                                LSTM model output
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    {% if predicted_close %}
+
+
+                    <!-- Main Prices -->
+
+                    <div class="price-grid">
+
+
+                        <div class="price-box">
+
+                            <span class="price-label">
+                                LAST CLOSE
+                            </span>
+
+                            <span class="price-value">
+                                {{ last_close }}
+                            </span>
+
+                        </div>
+
+
+                        <div class="price-box predicted">
+
+                            <span class="price-label">
+                                PREDICTED CLOSE
+                            </span>
+
+                            <span class="price-value">
+                                {{ predicted_close }}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Change Information -->
+
+                    <div class="change-section">
+
+                        <div class="change-row">
+
+                            <span>
+                                Price Change
+                            </span>
+
+                            <strong>
+                                {{ price_change }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="change-row">
+
+                            <span>
+                                Percentage Change
+                            </span>
+
+                            <strong>
+                                {{ percentage_change }}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Direction -->
+
+                    {% if direction == "UP" %}
+
+                        <div class="direction-box up">
+
+                            <div class="direction-arrow">
+                                ↑
+                            </div>
+
+                            <div>
+
+                                <span class="direction-label">
+                                    EXPECTED DIRECTION
+                                </span>
+
+                                <strong>
+                                    UP
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    {% else %}
+
+                        <div class="direction-box down">
+
+                            <div class="direction-arrow">
+                                ↓
+                            </div>
+
+                            <div>
+
+                                <span class="direction-label">
+                                    EXPECTED DIRECTION
+                                </span>
+
+                                <strong>
+                                    DOWN
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    {% endif %}
+
+
+                    <!-- Input Information -->
+
+                    <div class="input-details">
+
+                        <div class="detail-row">
+
+                            <span>
+                                Input Period
+                            </span>
+
+                            <strong>
+                                {{ input_start_date }}
+                                →
+                                {{ input_end_date }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="detail-row">
+
+                            <span>
+                                Trading Days Used
+                            </span>
+
+                            <strong>
+                                {{ trading_days }}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    {% else %}
+
+
+                    <!-- No Prediction Yet -->
+
+                    <div class="empty-result">
+
+                        <div class="empty-icon">
+                            📈
+                        </div>
+
+                        <h3>
+                            Waiting for Prediction
+                        </h3>
+
+                        <p>
+                            Upload your CSV file and click
+                            <strong>
+                                Predict Next Price
+                            </strong>
+                            to generate the LSTM prediction.
+                        </p>
+
+                    </div>
+
+
+                    {% endif %}
+
+                </section>
+
+            </main>
+
+
+            <!-- =====================================================
+                 MODEL INFORMATION
+            ====================================================== -->
+
+            <section class="model-info">
+
+                <div class="model-item">
+
+                    <span class="model-title">
+                        MODEL
+                    </span>
+
+                    <span class="model-value">
+                        LSTM
+                    </span>
+
+                </div>
+
+
+                <div class="model-divider"></div>
+
+
+                <div class="model-item">
+
+                    <span class="model-title">
+                        SEQUENCE
+                    </span>
+
+                    <span class="model-value">
+                        60 Days
+                    </span>
+
+                </div>
+
+
+                <div class="model-divider"></div>
+
+
+                <div class="model-item">
+
+                    <span class="model-title">
+                        FEATURES
+                    </span>
+
+                    <span class="model-value">
+                        5
+                    </span>
+
+                </div>
+
+
+                <div class="model-divider"></div>
+
+
+                <div class="model-item">
+
+                    <span class="model-title">
+                        TARGET
+                    </span>
+
+                    <span class="model-value">
+                        Close
+                    </span>
+
+                </div>
+
+            </section>
+
+
+            <!-- =====================================================
+                 FOOTER
+            ====================================================== -->
+
+            <footer>
+
+                <p>
+                    AI-Driven Stock Price Prediction using LSTM
+                </p>
+
+                <span>
+                    Academic / Demonstration Project
+                </span>
+
+            </footer>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =============================================================
+         JAVASCRIPT
+    ============================================================= -->
+
+    <script>
+
+        const fileInput =
+            document.getElementById("file");
+
+        const fileName =
+            document.getElementById("file-name");
+
+        const selectedFile =
+            document.getElementById("selected-file");
+
+        const fileUpload =
+            document.getElementById("file-upload");
+
+        const predictionForm =
+            document.getElementById("prediction-form");
+
+        const predictButton =
+            document.getElementById("predict-button");
+
+        const buttonText =
+            document.getElementById("button-text");
+
+        const loadingText =
+            document.getElementById("loading-text");
+
+
+        /* =========================================================
+           FILE SELECTION
+        ========================================================== */
+
+        fileInput.addEventListener("change", function () {
+
+            if (this.files.length > 0) {
+
+                const file = this.files[0];
+
+                fileName.textContent = file.name;
+
+                selectedFile.classList.add("active");
+
+                fileUpload.classList.add("selected");
+
+            }
+
+            else {
+
+                fileName.textContent =
+                    "No file selected";
+
+                selectedFile.classList.remove("active");
+
+                fileUpload.classList.remove("selected");
+
+            }
+
+        });
+
+
+        /* =========================================================
+           FORM SUBMISSION
+        ========================================================== */
+
+        predictionForm.addEventListener("submit", function () {
+
+            if (fileInput.files.length === 0) {
+                return;
+            }
+
+            predictButton.disabled = true;
+
+            buttonText.style.display = "none";
+
+            loadingText.style.display = "inline";
+
+        });
+
+    </script>
+
+
+</body>
+
+</html>
